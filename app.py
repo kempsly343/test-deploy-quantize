@@ -114,7 +114,9 @@ CONFIGURATION = {
 }
 
 # Path to the ONNX model
-LOCAL_MODEL_PATH = 'models/update_lenet_model_save_keras_quantized.onnx'
+# LOCAL_MODEL_PATH = 'models/update_lenet_model_save_keras_quantized.onnx'
+
+MODEL_PATH = 'update_lenet_model_save_keras_quantized.onnx'
 
 # Global ONNX Runtime session
 onnx_session = None
@@ -123,12 +125,12 @@ def init_model():
     global onnx_session
     
     # Check if the model file exists locally
-    if not os.path.exists(LOCAL_MODEL_PATH):
-        raise FileNotFoundError(f"Model file not found at {LOCAL_MODEL_PATH}")
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
     
     # Load the ONNX model
     try:
-        onnx_session = rt.InferenceSession(LOCAL_MODEL_PATH, providers=['CPUExecutionProvider'])
+        onnx_session = rt.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
         print("Model loaded successfully.")
     except Exception as e:
         print(f"Error loading model: {e}")
