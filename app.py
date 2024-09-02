@@ -11,13 +11,13 @@ app = Flask(__name__)
 
 # Configuration dictionary with image size and class names
 CONFIGURATION = {
-    "IM_SIZE": 256,
+    "IM_SIZE": 256,  # Ensure this matches the input size your model expects
     "CLASS_NAMES": ["ACCESSORIES", "BRACELETS", "CHAIN", "CHARMS", "EARRINGS",
                     "ENGAGEMENT RINGS", "ENGAGEMENT SET", "FASHION RINGS", "NECKLACES", "WEDDING BANDS"],
 }
 
 # Path to the ONNX model
-MODEL_PATH = 'update_lenet_model_save_keras_quantized.onnx'
+MODEL_PATH = 'models/update_lenet_model_save_keras_quantized.onnx'
 
 # Global ONNX Runtime session
 onnx_session = None
@@ -66,18 +66,19 @@ def predict():
         # Preprocess the image
         image = preprocess_image(image)
         
-        # Make predictions
-        try:
-            input_name = onnx_session.get_inputs()[0].name
-            output_name = onnx_session.get_outputs()[0].name
-            predictions = onnx_session.run([output_name], {input_name: image})[0]
-        except Exception as e:
-            return jsonify({"error": f"Error during inference: {e}"}), 500
+        # Get input and output names
+        input_name = onnx_session.get_inputs()[0].name
+        output_name = onnx_session.get_outputs()[0].name
+        
+        # Run the model to get predictions
+        onnx_pred = onnx_session.run([output_name], {input_name: image})
+        
+        # Convert the output to a numpy array
+        predictions = np.array(onnx_pred[0])
         
         # Get the top 3 predicted classes and their probabilities
-        predictions = predictions[0]  # Remove batch dimension
-        top_3_indices = np.argsort(predictions)[-3:][::-1]  # Top 3 indices
-        top_3_probabilities = predictions[top_3_indices]
+        top_3_indices = np.argsort(predictions[0])[-3:][::-1]  # Top 3 indices
+        top_3_probabilities = predictions[0][top_3_indices]
         top_3_classes = [CONFIGURATION['CLASS_NAMES'][index] for index in top_3_indices]
         
         # Prepare the results as a list of dictionaries
@@ -86,7 +87,7 @@ def predict():
             for i in range(3)
         ]
         
-        # Return the JSON response
+        # Return the JSON response with the top 3 predictions
         return jsonify({"top_3_classes_predictions": top_3_classes_predictions})
     
     except Exception as e:
